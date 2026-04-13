@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PT100温度计算器 - IEC 60751标准</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(to right, #2c3e50, #4a6491);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 992px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .calculator-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+        }
+
+        .calculator-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            color: #2c3e50;
+        }
+
+        .card-title span {
+            font-size: 1.8rem;
+            margin-right: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(to right, #2980b9, #1c5a7d);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        button.reset {
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+        }
+
+        button.reset:hover {
+            background: linear-gradient(to right, #c0392b, #a93226);
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border-left: 5px solid #3498db;
+        }
+
+        .result h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .result h3 span {
+            margin-right: 8px;
+            font-size: 1.5rem;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+
+        .result-detail {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        .reference-table {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .temp-positive {
+            color: #e74c3c;
+        }
+
+        .temp-negative {
+            color: #3498db;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+        }
+
+        .formula-box {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            border-left: 4px solid #3498db;
+        }
+
+        .note {
+            background-color: #fff8e1;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            border-left: 4px solid #ffc107;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .result-value {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 PT100温度计算器</h1>
+            <p>基于IEC 60751标准（工业铂电阻温度计）- 友太克YOTAKET | 仅供参考学习，严禁商用，违者自负</p>
+        </header>
+
+        <div class="content">
+            <div class="calculator-card">
+                <div class="card-title">
+                    <span>📱</span>
+                    <h2>温度 → 电阻计算</h2>
+                </div>
+
+                <div class="input-group">
+                    <label for="temperature">🌡️ 输入温度值</label>
+                    <input type="number" id="temperature" placeholder="例如: 25.5" step="0.1" value="25.0">
+                </div>
+
+                <div class="input-group">
+                    <label for="tempUnit">📏 温度单位</label>
+                    <select id="tempUnit">
+                        <option value="celsius">摄氏度 (°C)</option>
+                        <option value="fahrenheit">华氏度 (°F)</option>
+                        <option value="kelvin">开尔文 (K)</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button id="calcResistance">计算电阻值</button>
+                    <button class="reset" id="resetTemp">重置</button>
+                </div>
+
+                <div class="result" id="resistanceResult">
+                    <h3><span>⚡</span> 计算结果</h3>
+                    <div class="result-value" id="resistanceValue">109.73 Ω</div>
+                    <div class="result-detail">在 <span id="tempDisplay">25.00 °C</span> 时，PT100的电阻值为 <span id="resistanceDisplay">109.73 Ω</span></div>
+
+                    <div class="formula-box">
+                        <strong>计算公式 (IEC 60751):</strong><br>
+                        对于 t ≥ 0°C: R(t) = R₀(1 + At + Bt²)<br>
+                        对于 t &lt; 0°C: R(t) = R₀[1 + At + Bt² + C(t-100)t³]<br>
+                        其中: R₀ = 100 Ω, A = 3.9083×10⁻³, B = -5.775×10⁻⁷, C = -4.183×10⁻¹²
+                    </div>
+                </div>
+            </div>
+
+            <div class="calculator-card">
+                <div class="card-title">
+                    <span>🔄</span>
+                    <h2>电阻 → 温度计算</h2>
+                </div>
+
+                <div class="input-group">
+                    <label for="resistance">🔌 输入电阻值 (Ω)</label>
+                    <input type="number" id="resistance" placeholder="例如: 110.00" step="0.01" value="109.73">
+                </div>
+
+                <div class="input-group">
+                    <label for="resultUnit">📏 输出温度单位</label>
+                    <select id="resultUnit">
+                        <option value="celsius">摄氏度 (°C)</option>
+                        <option value="fahrenheit">华氏度 (°F)</option>
+                        <option value="kelvin">开尔文 (K)</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button id="calcTemperature">计算温度值</button>
+                    <button class="reset" id="resetRes">重置</button>
+                </div>
+
+                <div class="result" id="temperatureResult">
+                    <h3><span>🌡️</span> 计算结果</h3>
+                    <div class="result-value" id="temperatureValue">25.00 °C</div>
+                    <div class="result-detail">当电阻为 <span id="resInputDisplay">109.73 Ω</span> 时，PT100对应的温度为 <span id="tempResultDisplay">25.00 °C</span></div>
+
+                    <div class="note">
+                        <strong>注意：</strong> 从电阻计算温度需要求解方程。对于正温度范围，使用二次方程求解；对于负温度范围，使用迭代法求解四次方程。
+                    </div>
+                </div>
+            </div>
+
+            <div class="reference-table">
+                <div class="card-title">
+                    <span>📋</span>
+                    <h2>PT100常见温度点参考值</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>温度 (°C)</th>
+                            <th>电阻值 (Ω)</th>
+                            <th>温度 (°C)</th>
+                            <th>电阻值 (Ω)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="referenceData">
+                        <!-- 数据将通过JavaScript动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2024 PT100温度计算器 | 基于IEC 60751标准 | </p>
+            <p>计算公式符合国际电工委员会(IEC) 60751:2008标准，适用于工业铂电阻温度计</p>
+            <p style="margin-top: 10px; font-size: 0.8rem;">版本: 2.0 | 友太克YOTAKET | 仅供参考学习，严禁商用，违者自负</p>
+        </div>
+    </div>
+
+    <script>
+        // IEC 60751标准常数
+        const R0 = 100.0; // 0°C时的电阻值
+        const A = 3.9083e-3;
+        const B = -5.775e-7;
+        const C = -4.183e-12;
+
+        // 温度范围限制
+        const MIN_TEMP = -200;
+        const MAX_TEMP = 850;
+
+        // 获取DOM元素
+        const temperatureInput = document.getElementById('temperature');
+        const tempUnitSelect = document.getElementById('tempUnit');
+        const resistanceInput = document.getElementById('resistance');
+        const resultUnitSelect = document.getElementById('resultUnit');
+
+        const calcResistanceBtn = document.getElementById('calcResistance');
+        const calcTemperatureBtn = document.getElementById('calcTemperature');
+        const resetTempBtn = document.getElementById('resetTemp');
+        const resetResBtn = document.getElementById('resetRes');
+
+        const resistanceResult = document.getElementById('resistanceResult');
+        const resistanceValue = document.getElementById('resistanceValue');
+        const tempDisplay = document.getElementById('tempDisplay');
+        const resistanceDisplay = document.getElementById('resistanceDisplay');
+
+        const temperatureResult = document.getElementById('temperatureResult');
+        const temperatureValue = document.getElementById('temperatureValue');
+        const resInputDisplay = document.getElementById('resInputDisplay');
+        const tempResultDisplay = document.getElementById('tempResultDisplay');
+
+        const referenceData = document.getElementById('referenceData');
+
+        // 温度单位转换函数
+        function celsiusToFahrenheit(celsius) {
+            return (celsius * 9/5) + 32;
+        }
+
+        function fahrenheitToCelsius(fahrenheit) {
+            return (fahrenheit - 32) * 5/9;
+        }
+
+        function celsiusToKelvin(celsius) {
+            return celsius + 273.15;
+        }
+
+        function kelvinToCelsius(kelvin) {
+            return kelvin - 273.15;
+        }
+
+        // 根据温度计算电阻值 (IEC 60751标准)
+        function calculateResistanceFromTemp(tempCelsius) {
+            // 检查温度范围
+            if (tempCelsius < MIN_TEMP || tempCelsius > MAX_TEMP) {
+                throw new Error(`温度超出范围。请输入-200°C到850°C之间的值。`);
+            }
+
+            let resistance;
+
+            if (tempCelsius >= 0) {
+                // 对于 t ≥ 0°C: R(t) = R₀(1 + At + Bt²)
+                resistance = R0 * (1 + A * tempCelsius + B * Math.pow(tempCelsius, 2));
+            } else {
+                // 对于 t < 0°C: R(t) = R₀[1 + At + Bt² + C(t-100)t³]
+                resistance = R0 * (1 + A * tempCelsius + B * Math.pow(tempCelsius, 2) +
+                                  C * (tempCelsius - 100) * Math.pow(tempCelsius, 3));
+            }
+
+            return resistance;
+        }
+
+        // 根据电阻值计算温度 (IEC 60751标准)
+        function calculateTempFromResistance(resistance) {
+            // 检查电阻范围
+            const minResistance = calculateResistanceFromTemp(MIN_TEMP);
+            const maxResistance = calculateResistanceFromTemp(MAX_TEMP);
+
+            if (resistance < minResistance || resistance > maxResistance) {
+                throw new Error(`电阻值超出范围。请输入${minResistance.toFixed(2)}Ω到${maxResistance.toFixed(2)}Ω之间的值。`);
+            }
+
+            // 如果电阻等于R0，直接返回0°C
+            if (Math.abs(resistance - R0) < 1e-10) {
+                return 0;
+            }
+
+            let temperature;
+
+            // 对于电阻 ≥ R0 (温度 ≥ 0°C)，使用二次方程求解
+            if (resistance >= R0) {
+                // R(t) = R₀(1 + At + Bt²) => Bt² + At + (1 - R/R₀) = 0
+                const a = B;
+                const b = A;
+                const c = 1 - resistance / R0;
+
+                // 解二次方程，取正根
+                const discriminant = b * b - 4 * a * c;
+
+                if (discriminant < 0) {
+                    throw new Error("计算错误：判别式为负值");
+                }
+
+                // 选择正确的根（对于PT100，应为正根）
+                const root1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+                const root2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+
+                // 正温度范围应为正数
+                temperature = (root1 >= 0 && root1 <= MAX_TEMP) ? root1 : root2;
+
+                // 检查结果是否合理
+                if (temperature < 0 || temperature > MAX_TEMP) {
+                    throw new Error("计算错误：温度值超出合理范围");
+                }
+            } else {
+                // 对于电阻 < R0 (温度 < 0°C)，使用迭代法求解四次方程
+                temperature = newtonRaphsonForPT100(resistance);
+
+                // 检查结果是否合理
+                if (temperature < MIN_TEMP || temperature > 0) {
+                    throw new Error("计算错误：温度值超出合理范围");
+                }
+            }
+
+            return temperature;
+        }
+
+        // 牛顿迭代法求解负温度范围
+        function newtonRaphsonForPT100(resistance) {
+            // 初始猜测值：假设线性关系 R = R0(1 + At)
+            let t = (resistance / R0 - 1) / A;
+
+            // 如果初始猜测值大于0，设为-10°C
+            if (t >= 0) {
+                t = -10;
+            }
+
+            let prevT;
+            const maxIterations = 100;
+            const tolerance = 1e-6;
+
+            for (let i = 0; i < maxIterations; i++) {
+                // 计算当前温度下的电阻和导数
+                const Rt = calculateResistanceFromTemp(t);
+                const f = Rt - resistance;
+
+                // 如果f足够小，停止迭代
+                if (Math.abs(f) < tolerance) {
+                    break;
+                }
+
+                // 计算导数 dR/dt
+                let dRdt;
+                if (t >= 0) {
+                    dRdt = R0 * (A + 2 * B * t);
+                } else {
+                    dRdt = R0 * (A + 2 * B * t + C * (4 * Math.pow(t, 3) - 300 * Math.pow(t, 2)));
+                }
+
+                // 牛顿迭代公式: t_new = t - f/f'
+                prevT = t;
+                t = t - f / dRdt;
+
+                // 检查收敛性
+                if (Math.abs(t - prevT) < tolerance) {
+                    break;
+                }
+
+                // 确保温度在合理范围内
+                if (t < MIN_TEMP) {
+                    t = MIN_TEMP;
+                    break;
+                }
+            }
+
+            return t;
+        }
+
+        // 生成参考数据表格
+        function generateReferenceData() {
+            const temps = [-200, -150, -100, -50, 0, 50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 850];
+            let tableHTML = '';
+
+            for (let i = 0; i < temps.length; i += 2) {
+                const temp1 = temps[i];
+                const temp2 = temps[i+1] !== undefined ? temps[i+1] : null;
+
+                const res1 = calculateResistanceFromTemp(temp1);
+                const class1 = temp1 >= 0 ? 'temp-positive' : 'temp-negative';
+
+                tableHTML += `<tr>`;
+                tableHTML += `<td><span class="${class1}">${temp1} °C</span></td>`;
+                tableHTML += `<td>${res1.toFixed(2)} Ω</td>`;
+
+                if (temp2 !== null) {
+                    const res2 = calculateResistanceFromTemp(temp2);
+                    const class2 = temp2 >= 0 ? 'temp-positive' : 'temp-negative';
+                    tableHTML += `<td><span class="${class2}">${temp2} °C</span></td>`;
+                    tableHTML += `<td>${res2.toFixed(2)} Ω</td>`;
+                } else {
+                    tableHTML += `<td></td><td></td>`;
+                }
+
+                tableHTML += `</tr>`;
+            }
+
+            referenceData.innerHTML = tableHTML;
+        }
+
+        // 事件监听器
+        calcResistanceBtn.addEventListener('click', function() {
+            try {
+                const tempInput = parseFloat(temperatureInput.value);
+                const unit = tempUnitSelect.value;
+
+                if (isNaN(tempInput)) {
+                    alert('请输入有效的温度值');
+                    return;
+                }
+
+                // 转换为摄氏度
+                let tempCelsius;
+                switch(unit) {
+                    case 'celsius':
+                        tempCelsius = tempInput;
+                        break;
+                    case 'fahrenheit':
+                        tempCelsius = fahrenheitToCelsius(tempInput);
+                        break;
+                    case 'kelvin':
+                        tempCelsius = kelvinToCelsius(tempInput);
+                        break;
+                    default:
+                        tempCelsius = tempInput;
+                }
+
+                // 检查温度范围
+                if (tempCelsius < MIN_TEMP || tempCelsius > MAX_TEMP) {
+                    alert(`温度超出范围。请输入-200°C到850°C之间的值（或等效的其他单位）。`);
+                    return;
+                }
+
+                // 计算电阻值
+                const resistance = calculateResistanceFromTemp(tempCelsius);
+
+                // 显示结果
+                resistanceValue.textContent = `${resistance.toFixed(4)} Ω`;
+                tempDisplay.textContent = `${tempCelsius.toFixed(2)} °C`;
+                resistanceDisplay.textContent = `${resistance.toFixed(4)} Ω`;
+
+                resistanceResult.style.display = 'block';
+
+            } catch (error) {
+                alert(`计算错误: ${error.message}`);
+            }
+        });
+
+        calcTemperatureBtn.addEventListener('click', function() {
+            try {
+                const resistance = parseFloat(resistanceInput.value);
+                const unit = resultUnitSelect.value;
+
+                if (isNaN(resistance) || resistance <= 0) {
+                    alert('请输入有效的电阻值（正数）');
+                    return;
+                }
+
+                // 计算温度（摄氏度）
+                const tempCelsius = calculateTempFromResistance(resistance);
+
+                // 转换为所需的单位
+                let resultTemp, unitSymbol;
+                switch(unit) {
+                    case 'celsius':
+                        resultTemp = tempCelsius;
+                        unitSymbol = '°C';
+                        break;
+                    case 'fahrenheit':
+                        resultTemp = celsiusToFahrenheit(tempCelsius);
+                        unitSymbol = '°F';
+                        break;
+                    case 'kelvin':
+                        resultTemp = celsiusToKelvin(tempCelsius);
+                        unitSymbol = 'K';
+                        break;
+                    default:
+                        resultTemp = tempCelsius;
+                        unitSymbol = '°C';
+                }
+
+                // 显示结果
+                temperatureValue.textContent = `${resultTemp.toFixed(4)} ${unitSymbol}`;
+                resInputDisplay.textContent = `${resistance.toFixed(4)} Ω`;
+                tempResultDisplay.textContent = `${resultTemp.toFixed(4)} ${unitSymbol}`;
+
+                temperatureResult.style.display = 'block';
+
+            } catch (error) {
+                alert(`计算错误: ${error.message}`);
+            }
+        });
+
+        resetTempBtn.addEventListener('click', function() {
+            temperatureInput.value = '';
+            resistanceResult.style.display = 'none';
+        });
+
+        resetResBtn.addEventListener('click', function() {
+            resistanceInput.value = '';
+            temperatureResult.style.display = 'none';
+        });
+
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', function() {
+            generateReferenceData();
+
+            // 显示初始计算结果（示例值）
+            calcResistanceBtn.click();
+            calcTemperatureBtn.click();
+        });
+    </script>
+</body>
+</html>
